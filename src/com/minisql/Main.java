@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Scanner; // Import the Scanner class
+import java.util.Scanner;
 
 public class Main {
     private static final int TOTAL_ROWS = 1_000_000;
@@ -36,54 +36,54 @@ public class Main {
         // 4. Setup the Coordinator
         Coordinator coordinator = new Coordinator(workers);
         
-        // 5. Start the interactive query loop
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("\nWelcome to the Mini-SQL Engine!");
-        System.out.println("Type a query (e.g., SELECT * FROM users WHERE age > 55) or 'exit' to quit.");
+        // 5. Start the interactive query loop using try-with-resources for the Scanner
+        try (Scanner scanner = new Scanner(System.in)) {
+            System.out.println("\nWelcome to the Mini-SQL Engine!");
+            System.out.println("Type a query (e.g., SELECT * FROM users WHERE age > 55) or 'exit' to quit.");
 
-        while (true) {
-            System.out.print("\nmini-sql> ");
-            String sqlQuery = scanner.nextLine();
+            while (true) {
+                System.out.print("\nmini-sql> ");
+                String sqlQuery = scanner.nextLine();
 
-            // Check for exit command
-            if (sqlQuery.trim().equalsIgnoreCase("exit") || sqlQuery.trim().equalsIgnoreCase("quit")) {
-                System.out.println("Exiting Mini-SQL engine. Goodbye!");
-                break; // Exit the loop
-            }
-            
-            // Check for empty input
-            if (sqlQuery.trim().isEmpty()) {
-                continue;
-            }
-
-            try {
-                // Execute the user's query in a distributed fashion
-                System.out.println("--- Running Distributed (" + NUM_WORKERS + " Workers in Parallel) ---");
-                Instant startDistributed = Instant.now();
-                List<Row> distributedResults = coordinator.executeDistributedQuery(sqlQuery);
-                Instant endDistributed = Instant.now();
-                long distributedTime = Duration.between(startDistributed, endDistributed).toMillis();
-
-                System.out.println("Distributed execution took: " + distributedTime + " ms");
-                System.out.println("Results found: " + distributedResults.size());
-
-                // Print the first 10 results to avoid flooding the console
-                int limit = Math.min(distributedResults.size(), 10);
-                for (int i = 0; i < limit; i++) {
-                    System.out.println(distributedResults.get(i));
+                // Check for exit command
+                if (sqlQuery.trim().equalsIgnoreCase("exit") || sqlQuery.trim().equalsIgnoreCase("quit")) {
+                    System.out.println("Exiting Mini-SQL engine. Goodbye!");
+                    break; // Exit the loop
                 }
-                if (distributedResults.size() > 10) {
-                    System.out.println("... (" + (distributedResults.size() - 10) + " more rows)");
+                
+                // Check for empty input
+                if (sqlQuery.trim().isEmpty()) {
+                    continue;
                 }
 
-            } catch (IllegalArgumentException e) {
-                // Catch parsing or syntax errors and allow the user to try again
-                System.err.println("Syntax Error: " + e.getMessage());
-            }
-        }
+                try {
+                    // Execute the user's query in a distributed fashion
+                    System.out.println("--- Running Distributed (" + NUM_WORKERS + " Workers in Parallel) ---");
+                    Instant startDistributed = Instant.now();
+                    List<Row> distributedResults = coordinator.executeDistributedQuery(sqlQuery);
+                    Instant endDistributed = Instant.now();
+                    long distributedTime = Duration.between(startDistributed, endDistributed).toMillis();
 
-        // 6. Cleanup resources
-        scanner.close();
+                    System.out.println("Distributed execution took: " + distributedTime + " ms");
+                    System.out.println("Results found: " + distributedResults.size());
+
+                    // Print the first 10 results to avoid flooding the console
+                    int limit = Math.min(distributedResults.size(), 10);
+                    for (int i = 0; i < limit; i++) {
+                        System.out.println(distributedResults.get(i));
+                    }
+                    if (distributedResults.size() > 10) {
+                        System.out.println("... (" + (distributedResults.size() - 10) + " more rows)");
+                    }
+
+                } catch (IllegalArgumentException e) {
+                    // Catch parsing or syntax errors and allow the user to try again
+                    System.err.println("Syntax Error: " + e.getMessage());
+                }
+            }
+        } // The Scanner is automatically closed here by the try-with-resources block
+
+        // 6. Cleanup coordinator's thread pool
         coordinator.shutdown();
     }
 
