@@ -116,7 +116,7 @@ The project is built with standard Java and has no external dependencies. You on
 
 1.  **Clone the Repository**:
     ```bash
-    git clone [https://github.com/your-username/mini-sql-engine.git](https://github.com/your-username/mini-sql-engine.git)
+    git clone https://github.com/GauravSharma018/Distributed-Query-Executor
     cd mini-sql-engine
     ```
 
