@@ -131,43 +131,54 @@ The project is built with standard Java and has no external dependencies. You on
     This single command compiles everything correctly because the compiler can now see the full path src/com/minisql/model, etc.
     
 3.  **Run the Application**:
-    Finally, run the Main class. You need to tell Java where to find your compiled code (the classpath -cp bin) and give it the full name of the main class (package name + class name).
+    Now, run the Main class. You need to tell Java where to find your compiled code (the classpath -cp bin) and give it the full name of the main class (package name + class name).
     ```bash
     java -cp bin com.minisql.Main
     ```
 
+4.  **Input the query or exit**:
+    Finally, you can input the query you want to execute or you can exit the executor.
+   
 ### Expected Output
 You should see output that first sets up the simulation, then runs the benchmarks, and finally prints a summary of the performance gains.
 ```
 Generating 1000000 rows of data...
 Data generation complete.
+Dataset contains columns: id, name, age, department
 Worker 0 initialized with 250000 rows.
 Worker 0 created index on column 'id'.
+Worker 0 created index on column 'age'.
 Worker 1 initialized with 250000 rows.
 Worker 1 created index on column 'id'.
+Worker 1 created index on column 'age'.
 Worker 2 initialized with 250000 rows.
 Worker 2 created index on column 'id'.
+Worker 2 created index on column 'age'.
 Worker 3 initialized with 250000 rows.
 Worker 3 created index on column 'id'.
+Worker 3 created index on column 'age'.
 
-Executing query: SELECT id, name, age FROM users WHERE id = 500000
+Welcome to the Mini-SQL Engine!
+Type a query (e.g., SELECT * FROM users WHERE age > 55) or 'exit' to quit.
 
---- Running Sequentially (Single Thread) ---
-Worker 99 initialized with 1000000 rows.
-Worker 99 created index on column 'id'.
-Sequential execution took: 4968 ms
-Results found: 1
-{id=500000, name=User_500000, age=26}
-
+mini-sql> Select * From users where age < 50 
 --- Running Distributed (4 Workers in Parallel) ---
-Distributed execution took: 779 ms
-Results found: 1
-{id=500000, name=User_500000, age=26}
+Distributed execution took: 855 ms
+Results found: 750103
+{id=0, name=User_0, age=22, department=HR}
+{id=1, name=User_1, age=21, department=Sales}
+{id=2, name=User_2, age=28, department=HR}
+{id=4, name=User_4, age=45, department=Engineering}
+{id=5, name=User_5, age=32, department=Marketing}
+{id=6, name=User_6, age=37, department=Marketing}
+{id=7, name=User_7, age=26, department=HR}
+{id=8, name=User_8, age=23, department=Sales}
+{id=9, name=User_9, age=40, department=HR}
+{id=10, name=User_10, age=31, department=Engineering}
+... (750093 more rows)
 
---- Benchmark Summary ---
-Sequential Time: 4968 ms
-Distributed Time: 779 ms
-Speedup: 6.38x
+mini-sql> exit
+Exiting Mini-SQL engine. Goodbye!
 ```
 ## 📄 License
 
