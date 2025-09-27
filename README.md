@@ -90,6 +90,7 @@ The system is designed around a **Coordinator-Worker** (or Master-Slave) archite
 
 The project is organized into packages to follow the principle of **Separation of Concerns**, which makes the code modular, easier to understand, and maintain.
 
+```
 src/
 └── com/
     └── minisql/
@@ -102,6 +103,7 @@ src/
         │   └── Row.java
         └── parser/                # Query Parsing Logic. Isolated for maintainability.
             └── QueryParser.java
+```
 
 * **`model` package**: Contains simple Java objects that represent data (`Row`) or parts of the query (`Query`, `FilterCondition`). Keeping these separate from the execution logic is a core principle of good software design.
 * **`parser` package**: All the logic for understanding the SQL language is isolated here. This means we could swap it out for a more advanced parser (like one using ANTLR) without changing the rest of the engine.
