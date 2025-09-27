@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner; // Import the Scanner class
 
 public class Main {
     private static final int TOTAL_ROWS = 1_000_000;
@@ -17,6 +18,7 @@ public class Main {
         System.out.println("Generating " + TOTAL_ROWS + " rows of data...");
         List<Row> dataset = generateData();
         System.out.println("Data generation complete.");
+        System.out.println("Dataset contains columns: id, name, age, department");
 
         // 2. Partition the data for the workers
         List<List<Row>> partitions = partitionData(dataset, NUM_WORKERS);
@@ -25,54 +27,64 @@ public class Main {
         List<Worker> workers = new ArrayList<>();
         for (int i = 0; i < NUM_WORKERS; i++) {
             Worker worker = new Worker(i, partitions.get(i));
-            worker.createIndex("id"); // Create an index on the 'id' column
+            // Create an index on common query columns for better performance
+            worker.createIndex("id");
+            worker.createIndex("age");
             workers.add(worker);
         }
 
-        // 4. Define the SQL query
-        String sqlQuery = "SELECT id, name, age FROM users WHERE id = 500000";
-        System.out.println("\nExecuting query: " + sqlQuery);
-
-        // 5. Execute sequentially for baseline benchmark
-        System.out.println("\n--- Running Sequentially (Single Thread) ---");
-        Instant startSequential = Instant.now();
-        List<Row> sequentialResults = executeSequentially(dataset, sqlQuery);
-        Instant endSequential = Instant.now();
-        long sequentialTime = Duration.between(startSequential, endSequential).toMillis();
-        System.out.println("Sequential execution took: " + sequentialTime + " ms");
-        System.out.println("Results found: " + sequentialResults.size());
-        sequentialResults.forEach(System.out::println);
-
-
-        // 6. Execute in a distributed fashion
-        System.out.println("\n--- Running Distributed (" + NUM_WORKERS + " Workers in Parallel) ---");
+        // 4. Setup the Coordinator
         Coordinator coordinator = new Coordinator(workers);
-        Instant startDistributed = Instant.now();
-        List<Row> distributedResults = coordinator.executeDistributedQuery(sqlQuery);
-        Instant endDistributed = Instant.now();
-        long distributedTime = Duration.between(startDistributed, endDistributed).toMillis();
-        coordinator.shutdown();
+        
+        // 5. Start the interactive query loop
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("\nWelcome to the Mini-SQL Engine!");
+        System.out.println("Type a query (e.g., SELECT * FROM users WHERE age > 55) or 'exit' to quit.");
 
-        System.out.println("Distributed execution took: " + distributedTime + " ms");
-        System.out.println("Results found: " + distributedResults.size());
-        distributedResults.forEach(System.out::println);
+        while (true) {
+            System.out.print("\nmini-sql> ");
+            String sqlQuery = scanner.nextLine();
 
-        // 7. Compare results
-        System.out.println("\n--- Benchmark Summary ---");
-        System.out.printf("Sequential Time: %d ms%n", sequentialTime);
-        System.out.printf("Distributed Time: %d ms%n", distributedTime);
-        if (distributedTime > 0) {
-            double speedup = (double) sequentialTime / distributedTime;
-            System.out.printf("Speedup: %.2fx%n", speedup);
+            // Check for exit command
+            if (sqlQuery.trim().equalsIgnoreCase("exit") || sqlQuery.trim().equalsIgnoreCase("quit")) {
+                System.out.println("Exiting Mini-SQL engine. Goodbye!");
+                break; // Exit the loop
+            }
+            
+            // Check for empty input
+            if (sqlQuery.trim().isEmpty()) {
+                continue;
+            }
+
+            try {
+                // Execute the user's query in a distributed fashion
+                System.out.println("--- Running Distributed (" + NUM_WORKERS + " Workers in Parallel) ---");
+                Instant startDistributed = Instant.now();
+                List<Row> distributedResults = coordinator.executeDistributedQuery(sqlQuery);
+                Instant endDistributed = Instant.now();
+                long distributedTime = Duration.between(startDistributed, endDistributed).toMillis();
+
+                System.out.println("Distributed execution took: " + distributedTime + " ms");
+                System.out.println("Results found: " + distributedResults.size());
+
+                // Print the first 10 results to avoid flooding the console
+                int limit = Math.min(distributedResults.size(), 10);
+                for (int i = 0; i < limit; i++) {
+                    System.out.println(distributedResults.get(i));
+                }
+                if (distributedResults.size() > 10) {
+                    System.out.println("... (" + (distributedResults.size() - 10) + " more rows)");
+                }
+
+            } catch (IllegalArgumentException e) {
+                // Catch parsing or syntax errors and allow the user to try again
+                System.err.println("Syntax Error: " + e.getMessage());
+            }
         }
-    }
 
-    // Simulates sequential execution on the entire dataset
-    private static List<Row> executeSequentially(List<Row> dataset, String sql) {
-        // For a fair comparison, simulate the same work as one worker but on all data
-        Worker singleNode = new Worker(99, dataset);
-        singleNode.createIndex("id");
-        return singleNode.executeSubQuery(com.minisql.parser.QueryParser.parse(sql));
+        // 6. Cleanup resources
+        scanner.close();
+        coordinator.shutdown();
     }
 
     // Generates a sample dataset
