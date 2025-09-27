@@ -114,22 +114,26 @@ src/
 
 The project is built with standard Java and has no external dependencies. You only need a Java Development Kit (JDK) installed (version 8 or later).
 
-1.  **Clone the Repository**:
+1.  **Clone the Repository and Navigate to the Project ROOT Directory**:
+    Run this command to go to the main project folder (the one that contains the src folder).
     ```bash
     git clone https://github.com/GauravSharma018/Distributed-Query-Executor
     cd mini-sql-engine
+    OR
+    cd c:\Users\gaurav\Desktop\Coding\Distributed-Query-Executor-main\
     ```
 
-2.  **Compile the Java Files**:
-    From the **root directory** of the project (`mini-sql-engine/`), run the following command to compile all source files into the `src` directory itself:
+2.  **Compile ALL Java Files**:
+    Now, from this root directory, compile all your .java files. This command tells the compiler (javac) to place all the compiled .class files into a new directory named bin.
     ```bash
-    javac -d src src/com/minisql/*.java src/com/minisql/model/*.java src/com/minisql/parser/*.java
+    javac -d bin src/com/minisql/*.java src/com/minisql/model/*.java src/com/minisql/parser/*.java
     ```
-
-3.  **Run the Simulation**:
-    Now, from the **root directory**, run the `Main` class using its fully qualified name. The `-cp src` flag tells Java to look for compiled classes in the `src` folder.
+    This single command compiles everything correctly because the compiler can now see the full path src/com/minisql/model, etc.
+    
+3.  **Run the Application**:
+    Finally, run the Main class. You need to tell Java where to find your compiled code (the classpath -cp bin) and give it the full name of the main class (package name + class name).
     ```bash
-    java -cp src com.minisql.Main
+    java -cp bin com.minisql.Main
     ```
 
 ### Expected Output
@@ -139,24 +143,31 @@ Generating 1000000 rows of data...
 Data generation complete.
 Worker 0 initialized with 250000 rows.
 Worker 0 created index on column 'id'.
-... (other workers initialize) ...
+Worker 1 initialized with 250000 rows.
+Worker 1 created index on column 'id'.
+Worker 2 initialized with 250000 rows.
+Worker 2 created index on column 'id'.
+Worker 3 initialized with 250000 rows.
+Worker 3 created index on column 'id'.
 
 Executing query: SELECT id, name, age FROM users WHERE id = 500000
 
 --- Running Sequentially (Single Thread) ---
-Sequential execution took: 68 ms
+Worker 99 initialized with 1000000 rows.
+Worker 99 created index on column 'id'.
+Sequential execution took: 4968 ms
 Results found: 1
-{id=500000, name=User_500000, age=...}
+{id=500000, name=User_500000, age=26}
 
 --- Running Distributed (4 Workers in Parallel) ---
-Distributed execution took: 25 ms
+Distributed execution took: 779 ms
 Results found: 1
-{id=500000, name=User_500000, age=...}
+{id=500000, name=User_500000, age=26}
 
 --- Benchmark Summary ---
-Sequential Time: 68 ms
-Distributed Time: 25 ms
-Speedup: 2.72x
+Sequential Time: 4968 ms
+Distributed Time: 779 ms
+Speedup: 6.38x
 ```
 ## 📄 License
 
